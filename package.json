@@ -1,0 +1,17 @@
+{
+  "name": "kavatar-game",
+  "version": "1.0.0",
+  "description": "Kavatar: Phonics Counterattack",
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build-exe": "electron-packager . kavatar-game --platform=win32 --arch=x64 --out=dist --overwrite --icon=icon.png"
+  },
+  "author": "User",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-packager": "^17.1.2"
+  }
+}

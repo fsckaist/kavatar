@@ -1,0 +1,123 @@
+import HexTile from './HexTile.js';
+
+export default class HexGrid {
+    constructor(scene, centerX, centerY, size, radius) {
+        this.scene = scene;
+        this.centerX = centerX;
+        this.centerY = centerY;
+        this.hexSize = size;
+        this.mapRadius = radius;
+        this.tiles = new Map(); // key: "q,r", value: HexTile
+
+        this.generateMap();
+    }
+
+    generateMap() {
+        // Custom Map Data provided by User (v1.8 Hand-Drawn)
+        const mapData = [
+            { q: -9, r: 7 }, { q: -8, r: 7 }, { q: -7, r: 7 }, { q: -6, r: 7 }, { q: -5, r: 6 }, { q: -4, r: 6 }, { q: -3, r: 6 }, { q: -2, r: 6 }, { q: -1, r: 6 },
+            { q: 0, r: 5 }, { q: 1, r: 5 }, { q: 3, r: 5 }, { q: 2, r: 5 }, { q: 4, r: 5 }, { q: 5, r: 5 }, { q: 5, r: 4 }, { q: 4, r: 4 }, { q: 3, r: 4 },
+            { q: 2, r: 4 }, { q: 1, r: 4 }, { q: 0, r: 4 }, { q: -1, r: 5 }, { q: -2, r: 5 }, { q: -3, r: 5 }, { q: -4, r: 5 }, { q: -5, r: 5 }, { q: -6, r: 6 },
+            { q: -7, r: 6 }, { q: -10, r: 8 }, { q: -10, r: 7 }, { q: -10, r: 6 }, { q: -9, r: 5 }, { q: -9, r: 4 }, { q: -9, r: 3 }, { q: -9, r: 2 }, { q: -8, r: 1 },
+            { q: -7, r: 0 }, { q: -6, r: 0 }, { q: -5, r: 0 }, { q: -5, r: -1 }, { q: -4, r: -1 }, { q: -4, r: -2 }, { q: -3, r: -3 }, { q: -2, r: -4 }, { q: -1, r: -5 },
+            { q: 0, r: -6 }, { q: 1, r: -6 }, { q: 1, r: -5 }, { q: 2, r: -5 }, { q: 2, r: -4 }, { q: 2, r: -3 }, { q: 3, r: -3 }, { q: 3, r: -2 }, { q: 4, r: -2 },
+            { q: 4, r: -1 }, { q: 5, r: -2 }, { q: 5, r: -1 }, { q: 6, r: -1 }, { q: 6, r: 0 }, { q: 6, r: 1 }, { q: 5, r: 2 }, { q: 4, r: 3 }, { q: -8, r: 6 },
+            { q: -9, r: 6 }, { q: -8, r: 5 }, { q: -7, r: 5 }, { q: -6, r: 5 }, { q: -7, r: 4 }, { q: -8, r: 4 }, { q: -8, r: 3 }, { q: -7, r: 3 }, { q: -8, r: 2 },
+            { q: -7, r: 2 }, { q: -7, r: 1 }, { q: -6, r: 1 }, { q: -5, r: 1 }, { q: -6, r: 2 }, { q: -6, r: 3 }, { q: -6, r: 4 }, { q: -5, r: 4 }, { q: -4, r: 4 },
+            { q: -3, r: 4 }, { q: -2, r: 4 }, { q: -1, r: 4 }, { q: 1, r: 3 }, { q: 2, r: 3 }, { q: 3, r: 3 }, { q: 4, r: 2 }, { q: 5, r: 1 }, { q: 5, r: 0 },
+            { q: 0, r: 3 }, // Added Missing Tile
+            { q: 0, r: -5 }, { q: -1, r: -4 }, { q: 0, r: -4 }, { q: 1, r: -4 }, { q: -2, r: -3 }, { q: -1, r: -3 }, { q: 0, r: -3 }, { q: 1, r: -3 }, { q: -3, r: -2 },
+            { q: -2, r: -2 }, { q: -1, r: -2 }, { q: 0, r: -2 }, { q: 1, r: -2 }, { q: 2, r: -2 }, { q: -3, r: -1 }, { q: -2, r: -1 }, { q: -1, r: -1 }, { q: 0, r: -1 },
+            { q: 0, r: 0 }, { q: 1, r: -1 }, { q: 1, r: 0 }, { q: 2, r: -1 }, { q: 2, r: 0 }, { q: 3, r: 0 }, { q: 3, r: -1 }, { q: 4, r: 0 }, { q: 4, r: 1 },
+            { q: 3, r: 2 }, { q: 2, r: 2 }, { q: 1, r: 2 }, { q: 1, r: 1 }, { q: 2, r: 1 }, { q: 3, r: 1 }, { q: 0, r: 1 }, { q: -1, r: 2 }, { q: -2, r: 3 },
+            { q: -3, r: 3 }, { q: -3, r: 2 }, { q: -2, r: 2 }, { q: 0, r: 2 }, { q: -1, r: 3 }, { q: -4, r: 2 }, { q: -4, r: 1 }, { q: -4, r: 0 }, { q: -5, r: 2 },
+            { q: -5, r: 3 }, { q: -4, r: 3 }, { q: -3, r: 1 }, { q: -2, r: 0 }, { q: -1, r: 0 }, { q: -2, r: 1 }, { q: -1, r: 1 }, { q: -3, r: 0 }, { q: -5, r: 7 },
+            { q: -4, r: 7 }, { q: -3, r: 7 }, { q: 0, r: 6 }, { q: 1, r: 6 }, { q: 2, r: 6 }, { q: -2, r: 7 }
+        ];
+
+        // Sort Data for Reading Order (Top-to-Bottom (r), Left-to-Right (q))
+        mapData.sort((a, b) => {
+            if (a.r !== b.r) return a.r - b.r;
+            return a.q - b.q;
+        });
+
+        // Load Tiles from Data
+        for (let data of mapData) {
+            if (!this.tiles.has(`${data.q},${data.r}`)) {
+                this.createTile(data.q, data.r);
+            }
+        }
+
+        // Define Special Landmarks
+        const landmarks = [
+            { q: -1, r: 2, name: '창의학습관' },
+            { q: -3, r: 4, name: '오리연못' },
+            { q: -6, r: 6, name: '응용공학동' },
+            { q: -2, r: -1, name: '카이마루' },
+            { q: 1, r: 1, name: '스컴' },
+            { q: -6, r: 3, name: '어은동산' },
+            { q: 4, r: 3, name: '대운동장' }
+        ];
+
+        landmarks.forEach(lm => {
+            const tile = this.getTile(lm.q, lm.r);
+            if (tile) {
+                tile.setSpecial(lm.name);
+            }
+        });
+
+        console.log(`Generated Custom Map with ${this.tiles.size} tiles.`);
+    }
+
+    addHexGroup(cq, cr, radius) {
+        for (let q = -radius; q <= radius; q++) {
+            let r1 = Math.max(-radius, -q - radius);
+            let r2 = Math.min(radius, -q + radius);
+            for (let r = r1; r <= r2; r++) {
+                const mapQ = cq + q;
+                const mapR = cr + r;
+
+                // Add if not exists
+                if (!this.tiles.has(`${mapQ},${mapR}`)) {
+                    this.createTile(mapQ, mapR);
+                }
+            }
+        }
+    }
+
+    createTile(q, r) {
+        // Axial to Pixel conversion (pointy top)
+        const x = this.centerX + this.hexSize * (Math.sqrt(3) * q + Math.sqrt(3) / 2 * r);
+        const y = this.centerY + this.hexSize * (3 / 2 * r);
+
+        const index = this.tiles.size + 1; // 1-based sequential index
+        const tile = new HexTile(this.scene, q, r, x, y, this.hexSize - 2, index); // -2 for gap
+        this.tiles.set(`${q},${r}`, tile);
+        return tile;
+    }
+
+    getTile(q, r) {
+        return this.tiles.get(`${q},${r}`);
+    }
+
+    getAllTiles() {
+        return Array.from(this.tiles.values());
+    }
+
+    getDistance(a, b) {
+        return (Math.abs(a.q - b.q) + Math.abs(a.q + a.r - b.q - b.r) + Math.abs(a.r - b.r)) / 2;
+    }
+
+    getNeighbors(tile) {
+        const directions = [
+            { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+            { q: -1, r: 0 }, { q: -1, r: 1 }, { q: 0, r: 1 }
+        ];
+        const neighbors = [];
+        for (let dir of directions) {
+            const n = this.getTile(tile.q + dir.q, tile.r + dir.r);
+            if (n) neighbors.push(n);
+        }
+        return neighbors;
+    }
+}
