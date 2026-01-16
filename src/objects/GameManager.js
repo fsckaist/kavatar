@@ -74,21 +74,21 @@ export default class GameManager {
             // Map 3: Hexagon Corners (Radius 6)
             // (0,-6), (6,-6), (6,0), (0,6), (-6,6), (-6,0)
             startingPositions = [
-                { q: 0, r: -6, id: 1 },  // Top
-                { q: 6, r: -6, id: 2 },  // Top-Right
-                { q: 6, r: 0, id: 3 },   // Bottom-Right
-                { q: 0, r: 6, id: 4 },   // Bottom
-                { q: -6, r: 6, id: 5 },  // Bottom-Left
-                { q: -6, r: 0, id: 6 }   // Top-Left
+                { q: 0, r: -6, id: 1 },  // Top (North) - 12 o'clock - Vertex
+                { q: 6, r: -6, id: 2 },  // Top-Right (NE) - 2 o'clock - Vertex
+                { q: 6, r: 0, id: 3 },   // Bottom-Right (SE) - 4 o'clock - Vertex
+                { q: 0, r: 6, id: 4 },   // Bottom (South) - 6 o'clock - Vertex
+                { q: -6, r: 6, id: 5 },  // Bottom-Left (SW) - 8 o'clock - Vertex
+                { q: -6, r: 0, id: 6 }   // Top-Left (NW) - 10 o'clock - Vertex
             ];
         } else {
             // Map 1: Original
             startingPositions = [
-                { q: -3, r: -2, id: 1 }, // Orange
-                { q: 5, r: -1, id: 2 },  // Yellow
-                { q: -9, r: 7, id: 3 },  // Green
-                { q: 1, r: 5, id: 4 },   // Blue
-                { q: -2, r: 1, id: 5 }   // Purple
+                { q: -3, r: -2, id: 1 }, // Orange (NW)
+                { q: 5, r: -1, id: 2 },  // Yellow (E)
+                { q: 1, r: 5, id: 3 },   // Green (Now SE) -> Was Blue
+                { q: -9, r: 7, id: 4 },  // Blue (Now SW) -> Was Green
+                { q: -2, r: 1, id: 5 }   // Purple (Center/West)
             ];
         }
 
@@ -184,8 +184,8 @@ export default class GameManager {
                 }
             }
         }
-        const territoryBonus = Math.floor(tileCount / 5);
-        return 3 + territoryBonus + specialBonus;
+        const territoryBonus = Math.floor(tileCount / 4);
+        return 4 + territoryBonus + specialBonus;
     }
 
     calcAP(teamId) {
@@ -224,7 +224,7 @@ export default class GameManager {
         }
 
         // Check Phonics event
-        if (this.currentRound === 16 && !this.isPart2) {
+        if (this.currentRound === 12 && !this.isPart2) {
             this.triggerPart2();
         }
 
@@ -234,7 +234,7 @@ export default class GameManager {
     }
 
     checkVictory() {
-        if (!this.isPart2 && this.currentRound > 15) {
+        if (!this.isPart2 && this.currentRound > 11) {
             this.triggerPart2();
             return;
         }
@@ -251,7 +251,7 @@ export default class GameManager {
 
             // Condition A: Phonics eliminated (AFTER Round 16)
             // Round 16 is spawn/invincible round, so don't win immediately if count is 0 (shouldn't be though)
-            if (this.currentRound > 16 && phonicsCount === 0) {
+            if (this.currentRound > 12 && phonicsCount === 0) {
                 this.scene.events.emit('showToast', "승리! 포닉스를 모두 물리쳤습니다!");
                 this.scene.scene.pause();
                 return;
@@ -271,7 +271,7 @@ export default class GameManager {
 
         // Trigger Invasion Check BEFORE incrementing if we want it to start AT round 16
         // If currentRound is 15, we are ending 15. Next is 16.
-        if (!this.isPart2 && this.currentRound === 15) {
+        if (!this.isPart2 && this.currentRound === 11) {
             this.triggerPart2();
         }
 

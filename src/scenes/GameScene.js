@@ -110,8 +110,9 @@ export default class GameScene extends Phaser.Scene {
         }
         this.selectedTile = tile;
         // Draw highlight (simple hack for now)
-        tile.graphics.lineStyle(4, 0xffffff, 1);
-        tile.graphics.strokePoints(tile.getHexPoints(), true);
+        // Draw highlight (foggy fill)
+        tile.graphics.fillStyle(0xffffff, 0.3);
+        tile.graphics.fillPoints(tile.getHexPoints(), true);
     }
 
     setupActionListeners() {
@@ -229,7 +230,7 @@ export default class GameScene extends Phaser.Scene {
         const team = this.gameManager.getCurrentTeam();
 
         if (team.ap < 1) { // Min check for UI feedback
-            this.events.emit('showToast', "AP가 부족합니다 (최소 1 필요)");
+            this.events.emit('showToast', "Pt가 부족합니다 (최소 1 필요)");
             return;
         }
 
@@ -239,8 +240,8 @@ export default class GameScene extends Phaser.Scene {
 
     tryPurify(target, team) {
         // Invincibility Check (Round 16)
-        if (this.gameManager.currentRound === 16) {
-            this.events.emit('showToast', "16라운드에는 포닉스가 무적입니다!");
+        if (this.gameManager.currentRound === 12) {
+            this.events.emit('showToast', "12라운드에는 포닉스가 무적입니다!");
             return;
         }
 
@@ -263,7 +264,7 @@ export default class GameScene extends Phaser.Scene {
         const cost = target.power;
 
         if (team.ap < cost) {
-            this.events.emit('showToast', `AP가 부족합니다! (필요: ${cost})`);
+            this.events.emit('showToast', `Pt가 부족합니다! (필요: ${cost})`);
             return;
         }
 
@@ -298,7 +299,7 @@ export default class GameScene extends Phaser.Scene {
         const team = this.gameManager.getCurrentTeam();
 
         if (team.ap < 3) {
-            this.events.emit('showToast', "AP가 부족합니다 (필요: 3)");
+            this.events.emit('showToast', "Pt가 부족합니다 (필요: 3)");
             return;
         }
 
@@ -409,8 +410,8 @@ export default class GameScene extends Phaser.Scene {
 
     tryAttack(target, team) {
         // Check if Phonics and Round 16
-        if (target.ownerID === 9 && this.gameManager.currentRound === 16) {
-            this.events.emit('showToast', "16라운드에는 포닉스가 무적입니다!");
+        if (target.ownerID === 9 && this.gameManager.currentRound === 12) {
+            this.events.emit('showToast', "12라운드에는 포닉스가 무적입니다!");
             return;
         }
 
@@ -427,7 +428,7 @@ export default class GameScene extends Phaser.Scene {
         // 2. Costs 2 AP
         if (team.ap < 2) {
             console.log("Not enough AP");
-            this.events.emit('showToast', "AP가 부족합니다 (필요: 2)"); // Optional feedback
+            this.events.emit('showToast', "Pt가 부족합니다 (필요: 2)"); // Optional feedback
             return;
         }
 

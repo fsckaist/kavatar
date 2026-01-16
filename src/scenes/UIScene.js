@@ -45,7 +45,7 @@ export default class UIScene extends Phaser.Scene {
 
         this.add.text(col1, startY, 'TEAM', { font: '28px Do Hyeon', fill: '#888888' });
         this.add.text(col2, startY, 'LAND', { font: '28px Do Hyeon', fill: '#888888' });
-        this.add.text(col3, startY, 'AP (+INC)', { font: '28px Do Hyeon', fill: '#888888' });
+        this.add.text(col3, startY, 'Pt (+INC)', { font: '28px Do Hyeon', fill: '#888888' });
         // Store Header to toggle visibility
         this.purifyHeader = this.add.text(col4, startY, 'PURIFY', { font: '24px Do Hyeon', fill: '#888888' }).setVisible(false);
 
