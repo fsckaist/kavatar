@@ -29,243 +29,213 @@ export default class UIScene extends Phaser.Scene {
 
     create() {
         this.gameScene = this.scene.get('GameScene');
-
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // --- LOGO (Map Top Center) ---
-        const mapCenterX = width * 0.35;
-        this.logoMain = this.add.text(mapCenterX, 40, 'KAVATAR', {
-            fontFamily: 'Black Han Sans', fontSize: '60px', fill: '#00F0FF',
-            stroke: '#000000', strokeThickness: 8
-        }).setOrigin(0.5);
+        // Listen for UI Updates from GameScene/GameManager
+        this.gameScene.events.on('updateUI', () => {
+            this.updateUI();
+        });
 
-        this.logoSub = this.add.text(mapCenterX, 90, '', {
-            fontFamily: 'Do Hyeon', fontSize: '30px', fill: '#00F0FF',
-            stroke: '#000000', strokeThickness: 4
-        }).setOrigin(0.5);
+        // --- LOGO (Removed) ---
 
         // --- RIGHT SIDE PANEL LAYOUT ---
+        const rightPanelCenter = 1660; // Shifted Left ~65px from 1725
+
         // 1. Turn Timer (Top Right)
-        this.timerText = this.add.text(width - 50, 60, '60', {
-            fontFamily: 'Black Han Sans', fontSize: '90px', fill: '#ffeb3b',
-            stroke: '#000000', strokeThickness: 6
-        }).setOrigin(1, 0.5); // Right Aligned
+        // Previous rel X = -150. New X = 1510.
+        // User requested +90px shift from 1510 -> 1600.
+        // Then requested 15px Left -> 1585.
+        const timerX = 1585;
 
-        this.add.text(width - 50, 110, 'SECONDS LEFT', {
-            fontFamily: 'Do Hyeon', fontSize: '20px', fill: '#ffffff'
-        }).setOrigin(1, 0.5);
+        this.timerText = this.add.text(timerX, 130, '60', {
+            fontFamily: 'Ghanachocolate', fontSize: '90px', fill: '#3E2723', // Reduced 100->90
+            stroke: '#000000', strokeThickness: 0
+        }).setOrigin(0.5);
+        this.timerText.setStroke('#000000', 0);
 
+        // 2. Round Info (Below Timer)
+        // User: 1665 (-5px), 300 (+20px), 75px
+        this.roundText = this.add.text(1665, 300, 'Round 1', {
+            fontFamily: 'Ghanachocolate', fontSize: '75px', fill: '#EFEBE9',
+            stroke: '#3E2723', strokeThickness: 4
+        }).setOrigin(0.5);
 
-        // 2. Round & Status (Below Timer)
-        this.roundText = this.add.text(width - 50, 170, 'ROUND 1', {
-            fontFamily: 'Do Hyeon', fontSize: '48px', fill: '#ffffff'
-        }).setOrigin(1, 0.5);
+        // Turn Status
+        // User: 1665 (-5px), 350 (Preserved Y?), Remove "Turn" text
+        this.statusText = this.add.text(1665, 350, '주황 넙죽이', {
+            fontFamily: 'Ghanachocolate', fontSize: '40px', fill: '#FFA500',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
 
-        this.statusText = this.add.text(width - 50, 220, 'Team Name', {
-            fontFamily: 'Do Hyeon', fontSize: '38px', fill: '#aaaaaa'
-        }).setOrigin(1, 0.5);
+        // Turn AP Info (New)
+        // User: Below Turn Status, 40px.
+        this.turnApText = this.add.text(1665, 400, '0 Pt', {
+            fontFamily: 'Ghanachocolate', fontSize: '40px', fill: '#deb989',
+            stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5);
 
+        // 3. Scoreboard
+        // User: Start Y = 470, Row Gap = 35
+        const startY = 570; // 470 + 100 (moved down 100px)
+        const gapY = 35;
 
-        // 3. Scoreboard & AP Board (Table Style)
-        // Header
-        const startY = 280;
-        const gapY = 55; // Increased Gap
+        // Cols - Adjusted to align with background table
+        // Team Name: 1400 (Left Align) - 1500 - 100
+        // Land: 1610 (Center) - 1660 - 50
+        // Points: 1790 (Center) - no change
+        // P (Purify): 1850 (Center) - no change
+        const col1 = 1400;
+        const col2 = 1610;
+        const col3 = 1790;
+        const col4 = 1850;
 
-        // Shifted left significantly to prevent overlap
-        // Team | Land | AP | Purify
-        const col1 = width - 550; // Team Name (Moved further left)
-        const col2 = width - 390; // Land
-        const col3 = width - 240; // AP
-        const col4 = width - 100; // Purify (Now has margin from edge)
+        // Headers (Hidden)
+        this.purifyHeader = this.add.text(col4, startY, 'P', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#D7CCC8' }).setOrigin(0.5, 0).setVisible(false);
 
-        this.add.text(col1, startY, 'TEAM', { font: '28px Do Hyeon', fill: '#888888' });
-        this.add.text(col2, startY, 'LAND', { font: '28px Do Hyeon', fill: '#888888' });
-        this.add.text(col3, startY, 'Pt (+INC)', { font: '28px Do Hyeon', fill: '#888888' });
-        // Store Header to toggle visibility
-        this.purifyHeader = this.add.text(col4, startY, 'PURIFY', { font: '24px Do Hyeon', fill: '#888888' }).setVisible(false);
-
-        const teamNames = [
-            '', // 0
-            '주황 넙죽이', // 1
-            '노랑 넙죽이', // 2
-            '초록 넙죽이', // 3
-            '파랑 넙죽이', // 4
-            '보라 넙죽이', // 5
-            '갈색 넙죽이'  // 6
-        ];
-
+        const teamNames = ['', '주황 넙죽이', '노랑 넙죽이', '초록 넙죽이', '파랑 넙죽이', '보라 넙죽이', '분홍 넙죽이'];
         this.teamInfoTexts = [];
-        // Create rows for max 6 teams + Ponix? (Ponix usually doesn't have AP/Land score relevant for players but good to show)
-        // Let's do Team 1-6
+
         for (let i = 1; i <= 6; i++) {
-            const y = startY + 40 + (i * gapY);
+            const y = startY + ((i - 1) * gapY);
 
-            // Name (Color Name)
-            const tName = this.add.text(col1, y, teamNames[i] || `Team ${i}`, { font: '32px Do Hyeon', fill: '#ffffff' });
-            // Land
-            const tLand = this.add.text(col2 + 30, y, '0', { font: '32px Do Hyeon', fill: '#ffffff' }).setOrigin(0.5, 0);
-            // AP
-            const tAP = this.add.text(col3 + 50, y, '0 (+0)', { font: '32px Do Hyeon', fill: '#ffffff' }).setOrigin(0.5, 0);
-            // Purify Count (Initially Hidden)
-            const tPurify = this.add.text(col4 + 30, y, '0', { font: '32px Do Hyeon', fill: '#00ffff' }).setOrigin(0.5, 0).setVisible(false);
-
+            // Font Size: 20px
+            const tName = this.add.text(col1, y, teamNames[i], { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#deb989' }).setOrigin(0, 0.5); // Left Align
+            const tLand = this.add.text(col2, y, '0', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#deb989' }).setOrigin(0.5, 0.5); // Center
+            const tAP = this.add.text(col3, y, '0', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#deb989' }).setOrigin(0.5, 0.5); // Center
+            const tPurify = this.add.text(col4, y, '0', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#00ffff' }).setOrigin(0.5, 0.5).setVisible(false);
             this.teamInfoTexts[i] = { name: tName, land: tLand, ap: tAP, purify: tPurify };
         }
 
-        // HIDDEN Ponix Row (Team 9)
-        const pY = startY + 40 + (7 * gapY); // Below Team 6
+        const pY = startY + (6 * gapY);
         this.ponixInfo = {
-            name: this.add.text(col1, pY, 'PONIX', { font: '32px Do Hyeon', fill: '#ff0000' }).setVisible(false),
-            land: this.add.text(col2 + 30, pY, '0', { font: '32px Do Hyeon', fill: '#ff0000' }).setOrigin(0.5, 0).setVisible(false)
+            name: this.add.text(col1, pY, 'PONIX', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#FF5252' }).setOrigin(0, 0.5).setVisible(false),
+            land: this.add.text(col2, pY, '0', { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#FF5252' }).setOrigin(0.5, 0.5).setVisible(false)
         };
 
 
-        // 4. Action Buttons (Moved Bottom Right but higher to fit)
-        // Or keep them at bottom right, maybe slightly adjusted
-        const panelX = width - 220;
-        const panelY = height - 350;
-
-        // HOME Button (Top Left now? Or keep Top Right but moved left?)
-        // Let's put Home Button Top Left for safety
-        const homeBtn = this.createButton(80, 40, 'HOME', () => {
-            window.location.reload();
-        });
-        homeBtn.setScale(0.7);
 
 
-        // Action Panel
-        const actionX = width - 110;
-        const actionStartY = height - 300;
-        const actionGap = 55;
 
-        this.recruitBtn = this.createButton(actionX, actionStartY, '징집 (Q) 1Pt', () => this.gameScene.events.emit('actionRecruit'));
-        this.fortifyBtn = this.createButton(actionX, actionStartY + actionGap, '요새화 (W) 2Pt', () => this.gameScene.events.emit('actionFortify'));
-        this.expandBtn = this.createButton(actionX, actionStartY + actionGap * 2, '확장 (E) 3Pt', () => this.gameScene.events.emit('actionExpand'));
-        this.purifyBtn = this.createButton(actionX, actionStartY + actionGap * 3, '정화 (R) ?', () => this.gameScene.events.emit('actionPurify'));
-        this.purifyBtn.setVisible(false);
+        // 3. Scoreboard (Unchanged lines omitted if possible, but might need context)
+        // ... (Skipping Scoreboard logic in this replace block if possible, but they are adjacent)
 
-        // --- MANUAL AP CONTROL PANEL (Admin) ---
-        // Left of Action Panel
-        const adminX = actionX - 250; // Moved slightly more left for larger UI
-        const adminY = actionStartY + 50;
+        // Let's target the Round Text block specifically first for the color change.
+        // Actually, user wants Command Panel moved too. I can do it in chunks.
 
-        // 1. Team Selector (Text Button)
+        // --- REPLACEMENT FOR ROUND TEXT BLOCK ---
+        // see StartLine/EndLine
+
+        // --- REPLACEMENT FOR COMMAND PANEL BLOCK ---
+        // 4. Buttons / Command Panel - Compressed spacing, pushed lower
+        const panelStartY = 850; // Starting Y for command panel (moved down from 760)
+        const btnX_Left = 1570;
+        const btnX_Right = 1770;
+
+        // Command Title
+        this.commandTitle = this.add.text(1660, panelStartY, '- Commands -', {
+            fontFamily: 'Ghanachocolate', fontSize: '15px', fill: '#8D6E63'
+        }).setOrigin(0.5);
+
+        // Admin Panel (below title, +30px)
+        const adminY = panelStartY + 30; // 880
+
         this.adminTargetId = 1;
-        const adminTeamNames = ['', '주황', '노랑', '초록', '파랑', '보라', '갈색'];
+        this.adminTeamText = this.add.text(1530, adminY, '주황', {
+            fontFamily: 'Ghanachocolate', fontSize: '22px', color: '#deb989', backgroundColor: '#4E342E',
+            padding: { x: 8, y: 4 }
+        }).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+            this.adminTargetId = (this.adminTargetId % 6) + 1;
+            const names = ['', '주황', '노랑', '초록', '파랑', '보라', '분홍'];
+            this.adminTeamText.setText(names[this.adminTargetId]);
+            this.adminTeamText.setColor(this.getColorString(this.adminTargetId));
+        });
 
-        this.adminTeamText = this.add.text(adminX, adminY - 60, `대상: ${adminTeamNames[1]}`, {
-            fontFamily: 'Do Hyeon', fontSize: '30px', color: '#ffffff', backgroundColor: '#333333',
-            padding: { x: 15, y: 10 },
-            fixedWidth: 200, align: 'center'
-        }).setOrigin(0.5).setInteractive()
-            .on('pointerdown', () => {
-                this.adminTargetId++;
-                if (this.adminTargetId > 6) this.adminTargetId = 1; // Cycle 1-6
-                this.adminTeamText.setText(`대상: ${adminTeamNames[this.adminTargetId]}`);
-                this.adminTeamText.setColor(this.getColorString(this.adminTargetId)); // Match team color
-            });
-        this.adminTeamText.setStroke('#000000', 4);
-        this.adminTeamText.setColor(this.getColorString(1)); // Initial Color
+        this.add.text(1580, adminY, '에게', { fontFamily: 'Ghanachocolate', fontSize: '15px', fill: '#8D6E63' }).setOrigin(0.5);
 
-        // 2. Input Field (DOM)
-        // Styled to match the game UI (Dark background, White text, Border)
-        // Do Hyeon font family
-        const inputStyle = `
-            width: 140px; 
-            height: 50px; 
-            font-size: 32px; 
-            text-align: center; 
-            font-family: 'Do Hyeon', sans-serif;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            border: 2px solid white;
-            border-radius: 5px;
-            outline: none;
-        `;
-        this.adminApInput = this.add.dom(adminX, adminY + 10).createFromHTML(`<input type="number" id="adminApInput" style="${inputStyle}" value="0">`);
-
-        // Add listener for Enter key
+        const inputStyle = `width: 50px; height: 24px; font-size: 16px; text-align: center; font-family: 'Ghanachocolate'; background: rgba(0,0,0,0.6); color: white; border: 1px solid #8D6E63; border-radius: 4px; outline: none;`;
+        this.adminApInput = this.add.dom(1640, adminY).createFromHTML(`<input type="number" id="adminApInput" style="${inputStyle}" value="0">`);
         this.adminApInput.addListener('keydown');
-        this.adminApInput.on('keydown', (event) => {
-            if (event.code === 'Enter' || event.key === 'Enter') {
-                const inputEl = document.getElementById('adminApInput');
-                if (inputEl) {
-                    const amount = parseInt(inputEl.value) || 0;
-                    if (amount !== 0) {
-                        this.gameScene.events.emit('actionAdminAP', { teamId: this.adminTargetId, amount: amount });
-                        inputEl.value = "0"; // Auto clear
+        this.adminApInput.on('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const el = document.getElementById('adminApInput');
+                if (el) {
+                    const val = parseInt(el.value) || 0;
+                    if (val !== 0) {
+                        this.gameScene.events.emit('actionAdminAP', { teamId: this.adminTargetId, amount: val });
+                        el.value = "0";
                     }
                 }
             }
         });
 
-        // 3. Apply Button
-        // Increased size and visual weight
-        // 3. Apply Button
-        // Increased size and visual weight
-        this.createButton(adminX, adminY + 65, 'Pt 적용', () => { // Moved UP (80 -> 65) to avoid overlap below
-            const inputEl = document.getElementById('adminApInput');
-            if (inputEl) {
-                const amount = parseInt(inputEl.value) || 0;
-                if (amount !== 0) {
-                    this.gameScene.events.emit('actionAdminAP', { teamId: this.adminTargetId, amount: amount });
-                    inputEl.value = "0"; // Auto clear for better UX
+        this.add.text(1690, adminY, 'Pt', { fontFamily: 'Ghanachocolate', fontSize: '15px', fill: '#8D6E63' }).setOrigin(0.5);
+        this.createButton(1760, adminY, '<적용하기>', () => {
+            const el = document.getElementById('adminApInput');
+            if (el) {
+                const val = parseInt(el.value) || 0;
+                if (val !== 0) {
+                    this.gameScene.events.emit('actionAdminAP', { teamId: this.adminTargetId, amount: val });
+                    el.value = "0";
                 }
             }
-        }).setScale(1.0); // Reset scale to normal (was 0.8)
+        }).setScale(0.8);
 
-        // --- SPECIAL SKILLS TAB (Modal) ---
-        // --- SPECIAL SKILLS TAB (Modal) ---
-        const skillBtnY = adminY + 120; // Moved DOWN (90 -> 120) to clear Apply Button
 
-        // 1. Open Button
-        this.createButton(adminX, skillBtnY, '★ 특수 스킬 ★', () => {
+        // Action Buttons Start (below admin, +35px)
+        const btnYStart = adminY + 35; // 915
+        const btnGap = 32; // Tighter gap
+
+        // Left Column: Core Actions
+        // Row 1: Recruit, Pause
+        this.recruitBtn = this.createButton(btnX_Left, btnYStart, '< 징집 (Q) 1Pt >', () => this.gameScene.events.emit('actionRecruit'));
+        this.pauseBtn = this.createButton(btnX_Right, btnYStart, '< 일시정지 (P) >', () => this.gameScene.events.emit('actionTogglePause'));
+
+        // Row 2: Fortify, Special Skills Use
+        this.fortifyBtn = this.createButton(btnX_Left, btnYStart + btnGap, '< 요새화 (W) 2Pt >', () => this.gameScene.events.emit('actionFortify'));
+        this.createButton(btnX_Right, btnYStart + btnGap, '< 특수 스킬 사용 >', () => {
             this.specialSkillsPanel.setVisible(true);
-            if (this.adminApInput) this.adminApInput.setVisible(false); // Hide Input
-        }).setScale(0.9);
+            if (this.adminApInput) this.adminApInput.setVisible(false);
+        });
 
-        // ... (Modal Setup omitted, reused) ...
+        // Row 3: Expand, Skill Roulette
+        this.expandBtn = this.createButton(btnX_Left, btnYStart + btnGap * 2, '< 확장 (E) 3Pt >', () => this.gameScene.events.emit('actionExpand'));
+        this.createButton(btnX_Right, btnYStart + btnGap * 2, '< 특수 스킬 룰렛 >', () => this.openRoulette('SPECIAL'));
 
-        // --- MINI-GAME ROULETTE (Below Skill 6) ---
-        this.createButton(adminX, skillBtnY + 50, '★ 미니게임 룰렛 ★', () => { // 55 -> 50
-            this.openRoulette('MINIGAME');
-        }).setScale(0.9);
+        // Row 4: Purify (Part 2 only), Mini-Game Roulette
+        this.purifyBtn = this.createButton(btnX_Left, btnYStart + btnGap * 3, '!! 정화 (R) !!', () => this.gameScene.events.emit('actionPurify'));
+        this.purifyBtn.setColor('#00FFFF').setVisible(false);
+        this.createButton(btnX_Right, btnYStart + btnGap * 3, '< 미니게임 룰렛 >', () => this.openRoulette('MINIGAME'));
 
-        // --- SPECIAL SKILL ROULETTE (Below Mini-game) ---
-        this.createButton(adminX, skillBtnY + 100, '★ 특수 스킬 룰렛 ★', () => { // 110 -> 100
-            this.openRoulette('SPECIAL');
-        }).setScale(0.9);
+        // Undo Button (below grid, left aligned)
+        this.undoBtn = this.createButton(btnX_Left, btnYStart + btnGap * 4 + 5, '< 되돌리기 (A) >', () => this.gameScene.events.emit('actionUndo'));
 
-        // 2. Modal Container (Centered)
-        this.specialSkillsPanel = this.add.container(width / 2, height / 2).setVisible(false);
-        this.specialSkillsPanel.setDepth(200); // Ensure on top
+        // End Turn Button (right aligned, below grid)
+        this.endTurnBtn = this.createButton(btnX_Right, btnYStart + btnGap * 4 + 5, '<<< 턴 종료 (SPC) >>>', () => this.gameScene.events.emit('actionEndTurn'));
+        this.endTurnBtn.setColor('#FFD700'); // Gold color, but same font size as other buttons (15px)
 
-        // Background
-        const panelBg = this.add.rectangle(0, 0, 700, 500, 0x000000, 0.95)
-            .setStrokeStyle(4, 0x00F0FF);
+        // ...
+
+        // ... Then createButton method update ...
+
+        // I will try to use multi_replace for this to separate the Round change and the Command change.
+
+
+
+        // --- Init Overlays ---
+        this.specialSkillsPanel = this.add.container(width / 2, height / 2).setVisible(false).setDepth(200);
+        const panelBg = this.add.rectangle(0, 0, 800, 600, 0x3E2723, 0.95).setStrokeStyle(4, 0x8D6E63); // Darker Brown
         this.specialSkillsPanel.add(panelBg);
+        this.specialSkillsPanel.add(this.add.text(0, -250, '특수 스킬 선택', { fontFamily: 'Ghanachocolate', fontSize: '50px', fill: '#FFD700' }).setOrigin(0.5));
 
-        // Title
-        const panelTitle = this.add.text(0, -200, '특수 스킬 선택', {
-            fontFamily: 'Black Han Sans', fontSize: '48px', fill: '#ffffff'
-        }).setOrigin(0.5);
-        this.specialSkillsPanel.add(panelTitle);
-
-        // Close Button (Top Right)
-        const closeBtn = this.add.text(320, -220, 'X', {
-            fontFamily: 'Arial', fontSize: '40px', fill: '#ff0000', fontStyle: 'bold'
-        })
-            .setInteractive()
-            .setOrigin(0.5)
+        const closeBtn = this.add.text(360, -260, 'X', { fontFamily: 'Arial', fontSize: '40px', fill: '#FF5252' })
+            .setInteractive().setOrigin(0.5)
             .on('pointerdown', () => {
                 this.specialSkillsPanel.setVisible(false);
-                if (this.adminApInput) this.adminApInput.setVisible(true); // Show Input
+                if (this.adminApInput) this.adminApInput.setVisible(true);
             });
         this.specialSkillsPanel.add(closeBtn);
 
-        // 6 Skills (Grid 3x2)
-        this.skillButtons = [];
         const skillData = [
             { name: '📡 EMP 충격파', desc: '지정 위치 및 주변 반경 1칸 반경 전투력 -2' },
             { name: '🚀 퀀텀 점프', desc: '비어있거나 약한 적(전투력 1) 땅 즉시 점령' },
@@ -274,121 +244,40 @@ export default class UIScene extends Phaser.Scene {
             { name: '⚡ 오버클럭', desc: '선택 및 인접 아군 땅 전투력 +3' },
             { name: '🎲 랜덤 다이스', desc: '즉시 AP +5~10 획득' }
         ];
+        this.skillButtons = [];
+        skillData.forEach((d, idx) => {
+            const c = idx % 3; const r = Math.floor(idx / 3);
+            const sx = (c - 1) * 240; const sy = (r - 0.5) * 200 + 40;
+            const btn = this.add.container(sx, sy);
 
-        skillData.forEach((data, idx) => {
-            const col = idx % 3;
-            const row = Math.floor(idx / 3);
-            const sx = (col - 1) * 220;
-            const sy = (row - 0.5) * 180 + 20;
+            const b = this.add.rectangle(0, 0, 230, 180, 0x5D4037).setStrokeStyle(2, 0xA1887F).setInteractive()
+                .on('pointerdown', () => { this.gameScene.events.emit('actionSkill', idx); this.specialSkillsPanel.setVisible(false); if (this.adminApInput) this.adminApInput.setVisible(true); })
+                .on('pointerover', function () { this.fillColor = 0x6D4C41; })
+                .on('pointerout', function () { this.fillColor = 0x5D4037; });
+            btn.add(b);
 
-            const btnContainer = this.add.container(sx, sy);
+            btn.add(this.add.text(0, -60, d.name, { fontFamily: 'Ghanachocolate', fontSize: '28px', fill: '#FFCC80' }).setOrigin(0.5));
+            btn.add(this.add.text(0, 10, d.desc, { fontFamily: 'Ghanachocolate', fontSize: '20px', fill: '#FFE0B2', align: 'center', wordWrap: { width: 210 } }).setOrigin(0.5));
+            const cd = this.add.text(0, 60, '', { fontFamily: 'Ghanachocolate', fontSize: '32px', fill: '#FF5252' }).setOrigin(0.5).setVisible(false);
+            btn.add(cd);
 
-            // Background
-            const bg = this.add.rectangle(0, 0, 210, 160, 0x333333)
-                .setStrokeStyle(2, 0x888888)
-                .setInteractive()
-                .on('pointerover', function () { this.fillColor = 0x555555; })
-                .on('pointerout', function () { this.fillColor = 0x333333; })
-                .on('pointerdown', () => {
-                    this.gameScene.events.emit('actionSkill', idx);
-                    this.specialSkillsPanel.setVisible(false);
-                    if (this.adminApInput) this.adminApInput.setVisible(true); // Show Input
-                });
-            btnContainer.add(bg);
-
-            // Name
-            const nameText = this.add.text(0, -50, data.name, {
-                fontFamily: 'Do Hyeon', fontSize: '28px', fill: '#ffffff'
-            }).setOrigin(0.5);
-            btnContainer.add(nameText);
-
-            // Desc
-            const descText = this.add.text(0, 10, data.desc, {
-                fontFamily: 'Do Hyeon', fontSize: '18px', fill: '#aaaaaa',
-                align: 'center', wordWrap: { width: 190 }
-            }).setOrigin(0.5);
-            btnContainer.add(descText);
-
-            // Cooldown Text (Hidden by default)
-            const cdText = this.add.text(0, 50, '', {
-                fontFamily: "Black Han Sans", fontSize: "32px", fill: "#ff0000"
-            }).setOrigin(0.5);
-            btnContainer.add(cdText);
-
-            this.specialSkillsPanel.add(btnContainer);
-
-            // Store ref for updates
-            this.skillButtons.push({
-                bg: bg,
-                name: nameText,
-                desc: descText,
-                cd: cdText,
-                baseName: data.name,
-                baseDesc: data.desc
-            });
+            this.specialSkillsPanel.add(btn);
+            this.skillButtons.push({ bg: b, name: btn.list[1], desc: btn.list[2], cd, baseName: d.name, baseDesc: d.desc });
         });
-
-        // (Buttons moved up)
 
         this.createRoulettePanel(width, height);
 
-        // Manual AP Control End ---
-        // Undo / End Turn separate (Now Stacked Vertically Below Purify)
-        this.pauseBtn = this.createButton(actionX, actionStartY + actionGap * 4, '일시정지 (P)', () => this.gameScene.events.emit('actionTogglePause'));
-        this.undoBtn = this.createButton(actionX, actionStartY + actionGap * 5, '되돌리기 (A)', () => this.gameScene.events.emit('actionUndo'));
-        this.endTurnBtn = this.createButton(actionX, actionStartY + actionGap * 6, '턴 종료 (SPC)', () => this.gameScene.events.emit('actionEndTurn'));
+        // Debug Buttons (Removed)
 
-
-        // Listen to updates - SAVE HANDLERS for cleanup
-        this.updateUIHandler = () => this.updateUI();
-        this.showToastHandler = (msg) => this.showToast(msg);
-
-        this.gameScene.events.on('updateUI', this.updateUIHandler);
-        this.gameScene.events.on('showToast', this.showToastHandler);
-        this.gameScene.events.on('gameOver', (data) => this.createGameOverScreen(data));
-
-        // Initial update
+        // ... existing code ...
         this.time.delayedCall(100, () => this.updateUI());
 
-        // --- DEBUG / SAVE LOAD CONTROLS ---
-        // Below Home Button
-        const dbBtnY = 100;
-        this.createButton(80, dbBtnY, 'SAVE', () => {
-            if (!this.gameScene || !this.gameScene.gameManager) return;
-            const json = SaveManager.save(this.gameScene.gameManager);
-            if (json) {
-                localStorage.setItem('kavatar_save_debug', json);
-                navigator.clipboard.writeText(json).then(() => {
-                    this.showToast("상태 저장 완료 (클립보드 복사됨)");
-                });
-            }
-        }).setScale(0.6);
 
-        this.createButton(80, dbBtnY + 40, 'LOAD', () => {
-            if (!this.gameScene || !this.gameScene.gameManager) return;
-            const json = localStorage.getItem('kavatar_save_debug');
-            if (json) {
-                if (SaveManager.load(this.gameScene.gameManager, json)) {
-                    this.showToast("상태 불러오기 완료");
-                    this.gameScene.events.emit('updateUI');
-                }
-            } else {
-                this.showToast("저장된 상태가 없습니다.");
-            }
-        }).setScale(0.6);
-
-        // Cleanup when UIScene shuts down
-        this.events.on('shutdown', () => {
-            if (this.gameScene) {
-                this.gameScene.events.off('updateUI', this.updateUIHandler);
-                this.gameScene.events.off('showToast', this.showToastHandler);
-            }
-        });
     }
 
     createButton(x, y, text, callback) {
         const btn = this.add.text(x, y, text, {
-            fontFamily: 'Do Hyeon', fontSize: '32px', color: '#ffffff',
+            fontFamily: 'Ghanachocolate', fontSize: '15px', color: '#deb989', // User Requested 15px
             stroke: '#000000', strokeThickness: 4,
             padding: { x: 10, y: 5 }
         })
@@ -400,7 +289,7 @@ export default class UIScene extends Phaser.Scene {
                 btn.setScale(1.1); // Slight pop
             })
             .on('pointerout', () => {
-                btn.setStyle({ fill: '#ffffff' });
+                btn.setStyle({ fill: '#deb989' });
                 btn.setScale(1.0);
             });
         return btn;
@@ -411,18 +300,23 @@ export default class UIScene extends Phaser.Scene {
         const gm = this.gameScene.gameManager;
 
         // 1. Timer
-        const time = gm.timeLeft || 0;
-        this.timerText.setText(time);
+        let time = gm.timeLeft;
 
-        // Timer color: Match Team Color, OR Red if low time
-        if (time <= 10) {
-            this.timerText.setColor('#ff0000'); // Warning Red
+        if (gm.isSetupPhase) {
+            // User requested to show numbers instead of "SETUP" text
+            // Show default "60" or generic text if preferred, but user specifically asked for numbers back.
+            this.timerText.setText("60");
+            this.timerText.setColor('#3E2723'); // Regular Dark Brown
+            this.timerText.setFontSize('90px');
         } else {
-            const currentTeam = gm.getCurrentTeam();
-            if (currentTeam) {
-                this.timerText.setColor(this.getColorString(currentTeam.id));
+            if (time === undefined) time = 60;
+            this.timerText.setText(time);
+            this.timerText.setFontSize('90px');
+
+            if (time <= 10) {
+                this.timerText.setColor('#ff0000');
             } else {
-                this.timerText.setColor('#ffeb3b'); // Default Yellow
+                this.timerText.setColor('#3E2723');
             }
         }
 
@@ -430,64 +324,45 @@ export default class UIScene extends Phaser.Scene {
         this.roundText.setText(`ROUND ${gm.currentRound}`);
         const currentTeam = gm.getCurrentTeam();
         if (currentTeam) {
-            this.statusText.setText(`${currentTeam.name} Turn`);
+            this.statusText.setText(`${currentTeam.name}`); // Removed " Turn"
             this.statusText.setColor(this.getColorString(currentTeam.id));
+
+            // Update AP Text
+            this.turnApText.setVisible(true);
+            this.turnApText.setText(`${currentTeam.ap} Pt`);
+            // Optional: Color match?
+            // this.turnApText.setColor(this.getColorString(currentTeam.id));
         } else {
             this.statusText.setText('AI Processing...');
             this.statusText.setColor('#ff0000');
+            this.turnApText.setVisible(false);
         }
 
-        // 3. Scoreboard & AP Update
-        // Calculate Land Counts
+        // 3. Scoreboard
         const counts = {};
-        gm.grid.getAllTiles().forEach(t => {
-            counts[t.ownerID] = (counts[t.ownerID] || 0) + 1;
-        });
+        gm.grid.getAllTiles().forEach(t => { counts[t.ownerID] = (counts[t.ownerID] || 0) + 1; });
 
-        // Update Rows
         for (let i = 1; i <= 6; i++) {
             const team = gm.teamData[i];
             const ui = this.teamInfoTexts[i];
             if (!team || !ui) {
-                // Hide if team doesn't exist (e.g. Map 1 only 5 teams)
-                if (ui) {
-                    ui.name.setVisible(false);
-                    ui.land.setVisible(false);
-                    ui.ap.setVisible(false);
-                }
+                if (ui) { ui.name.setVisible(false); ui.land.setVisible(false); ui.ap.setVisible(false); }
                 continue;
             }
 
-            ui.name.setVisible(true);
-            ui.land.setVisible(true);
-            ui.ap.setVisible(true);
-
-            // Update Name color
+            ui.name.setVisible(true); ui.land.setVisible(true); ui.ap.setVisible(true);
             ui.name.setColor(this.getColorString(i));
-
-            // Land Count
-            const land = counts[i] || 0;
-            ui.land.setText(land);
-
-            // AP + Income
+            ui.land.setText(counts[i] || 0);
             const income = gm.calculateIncome(i);
             ui.ap.setText(`${team.ap} (+${income})`);
-
-            // Purify Count
             ui.purify.setText(team.purifyCount || 0);
 
-            // Highlight current team
-            if (gm.currentTurn === i) {
-                ui.name.setStroke('#ffffff', 2);
-            } else {
-                ui.name.setStroke('#000000', 0);
-            }
+            if (gm.currentTurn === i) ui.name.setStroke('#ffffff', 2);
+            else ui.name.setStroke('#000000', 0);
         }
 
-        // Update Ponix (Team 9) Row AND Purify Column if Part 2 (Round > 15)
+        // Part 2 Check
         const isPart2 = gm.currentRound > 15 || gm.isPart2;
-
-        // Toggle Header
         if (this.purifyHeader) this.purifyHeader.setVisible(isPart2);
 
         if (isPart2) {
@@ -500,47 +375,22 @@ export default class UIScene extends Phaser.Scene {
             this.ponixInfo.land.setVisible(false);
         }
 
-        // Toggle Purify Columns
         for (let i = 1; i <= 6; i++) {
             const ui = this.teamInfoTexts[i];
-            if (ui && ui.purify) {
-                ui.purify.setVisible(isPart2);
-            }
+            if (ui && ui.purify) ui.purify.setVisible(isPart2);
         }
 
         // 4. Buttons
-        if (gm.isPart2 && !this.purifyBtn.visible) {
-            this.purifyBtn.setVisible(true);
-        }
+        if (gm.isPart2 && !this.purifyBtn.visible) this.purifyBtn.setVisible(true);
 
         if (this.pauseBtn) {
             this.pauseBtn.setText(gm.isPaused ? '재개 (P)' : '일시정지 (P)');
-            this.pauseBtn.setStyle({ fill: gm.isPaused ? '#ffff00' : '#ffffff' });
-        }
-
-        // 5. Logo Update
-        const isSetup = gm.isSetupPhase;
-        const colorBlue = '#00F0FF';
-        const colorRed = '#FF2222';
-
-        if (gm.isPart2) {
-            this.logoMain.setColor(colorRed);
-            this.logoSub.setColor(colorRed);
-            this.logoSub.setText('포닉스와 재');
-        } else {
-            this.logoMain.setColor(colorBlue);
-            this.logoSub.setColor(colorBlue);
-            if (isSetup) {
-                this.logoSub.setText('');
-                this.logoSub.setText('넙죽이의 길');
-            }
+            this.pauseBtn.setStyle({ fill: gm.isPaused ? '#ffff00' : '#deb989' });
         }
 
         // 6. Skill Buttons Update
         if (this.skillButtons && gm.getCurrentTeam()) {
-            const team = gm.getCurrentTeam();
             this.skillButtons.forEach((btn, idx) => {
-                // Dynamic Content (Skill 6)
                 if (idx === 5) {
                     if (gm.isPart2) {
                         btn.name.setText('💉 백신 코드');
@@ -550,13 +400,6 @@ export default class UIScene extends Phaser.Scene {
                         btn.desc.setText(btn.baseDesc);
                     }
                 }
-
-                // Cooldowns (Disabled)
-                btn.bg.setFillStyle(0x333333); // Normal
-                if (btn.bg.input) btn.bg.input.enabled = true;
-                btn.cd.setVisible(false);
-                btn.name.setAlpha(1);
-                btn.desc.setAlpha(1);
             });
         }
     }
@@ -568,13 +411,13 @@ export default class UIScene extends Phaser.Scene {
         const y = this.cameras.main.height - 100;
         const container = this.add.container(x, y);
         const text = this.add.text(0, 0, message, {
-            fontFamily: 'Do Hyeon', fontSize: '24px', color: '#ffffff',
+            fontFamily: 'Ghanachocolate', fontSize: '24px', color: '#ffffff',
             backgroundColor: '#000000', padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
         container.add(text);
         container.setDepth(100);
         this.tweens.add({
-            targets: container, alpha: 0, duration: 1000, delay: 1000,
+            targets: container, alpha: 0, duration: 1000, delay: 3000,
             onComplete: () => { container.destroy(); if (this.currentToast === container) this.currentToast = null; }
         });
         this.currentToast = container;
@@ -584,19 +427,20 @@ export default class UIScene extends Phaser.Scene {
         const width = this.cameras.main.width;
         const height = this.cameras.main.height;
 
-        // 1. Background Overlay
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9)
+        // 1. Background Over - Dark Brown Theme
+        this.add.rectangle(width / 2, height / 2, width, height, 0x2b1d0e, 0.95)
+            .setDepth(2000)
             .setInteractive(); // Block input
 
         // 2. Messages based on Winner
         let mainMsg = "";
         let subMsg = "";
-        let mainColor = "#ffffff";
+        let mainColor = "#deb989"; // Default Gold
 
         if (data.winner === 'Player') {
             mainMsg = `${data.winningTeam} 승리!`;
-            subMsg = "포닉스를 몰아내고 넙죽이의 왕좌에 앉았습니다!";
-            mainColor = "#00F0FF"; // Player Blue
+            subMsg = "포닉스를 몰아내고 넥죽이의 왕좌에 앉았습니다!";
+            mainColor = "#deb989"; // Gold
         } else {
             mainMsg = "포닉스 승리!";
             subMsg = "아쉽지만 카이스트는 점령당했습니다!";
@@ -605,25 +449,43 @@ export default class UIScene extends Phaser.Scene {
 
         // 3. Display Text
         this.add.text(width / 2, height / 2 - 50, mainMsg, {
-            fontFamily: 'Black Han Sans', fontSize: '80px', fill: mainColor,
-            stroke: '#ffffff', strokeThickness: 2,
+            fontFamily: 'Ghanachocolate', fontSize: '80px', fill: mainColor,
+            stroke: '#4a3020', strokeThickness: 3,
             align: 'center'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(2001);
 
         this.add.text(width / 2, height / 2 + 30, subMsg, {
-            fontFamily: 'Do Hyeon', fontSize: '40px', fill: '#ffffff',
+            fontFamily: 'Ghanachocolate', fontSize: '40px', fill: '#e0c0a0',
             align: 'center'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(2001);
 
-        // 4. Restart Button
-        const restartBtn = this.add.text(width / 2, height / 2 + 120, '메인 메뉴로 돌아가기', {
-            fontFamily: 'Do Hyeon', fontSize: '32px', fill: '#ffffff',
+        // 4. Buttons
+        // Return to Map Button (Restart current map)
+        const returnMapBtn = this.add.text(width / 2, height / 2 + 100, '맵으로 돌아가기', {
+            fontFamily: 'Ghanachocolate', fontSize: '32px', fill: '#deb989',
+            backgroundColor: '#4a3020', padding: { x: 20, y: 10 }
+        })
+            .setInteractive()
+            .setOrigin(0.5)
+            .setDepth(2001)
+            .on('pointerover', () => returnMapBtn.setStyle({ fill: '#deb989' })) // Already gold, maybe lighter? Or keep.
+            .on('pointerout', () => returnMapBtn.setStyle({ fill: '#deb989' }))
+            .on('pointerdown', () => {
+                // Let GameScene.shutdown() handle UIScene cleanup
+                const mapId = this.gameScene.mapId;
+                this.gameScene.scene.restart({ mapId: mapId });
+            });
+
+        // Return to Main Menu Button
+        const restartBtn = this.add.text(width / 2, height / 2 + 160, '메인 메뉴로 돌아가기', {
+            fontFamily: 'Ghanachocolate', fontSize: '32px', fill: '#deb989',
             backgroundColor: '#333333', padding: { x: 20, y: 10 }
         })
             .setInteractive()
             .setOrigin(0.5)
+            .setDepth(2001)
             .on('pointerover', () => restartBtn.setStyle({ fill: '#ffff00' }))
-            .on('pointerout', () => restartBtn.setStyle({ fill: '#ffffff' }))
+            .on('pointerout', () => restartBtn.setStyle({ fill: '#deb989' }))
             .on('pointerdown', () => {
                 window.location.reload();
             });
@@ -639,19 +501,19 @@ export default class UIScene extends Phaser.Scene {
         // Background Modal (Larger: 90% of screen)
         const panelW = width * 0.9;
         const panelH = height * 0.9;
-        const bg = this.add.rectangle(0, 0, panelW, panelH, 0x000000, 0.95)
-            .setStrokeStyle(4, 0xff00ff);
+        const bg = this.add.rectangle(0, 0, panelW, panelH, 0x2b1d0e, 0.95)
+            .setStrokeStyle(4, 0xdeb989);
         this.roulettePanel.add(bg);
 
         // Title
         this.rouletteTitle = this.add.text(0, -panelH / 2 + 50, '미니게임 룰렛', {
-            fontFamily: 'Black Han Sans', fontSize: '48px', fill: '#ffff00'
+            fontFamily: 'Ghanachocolate', fontSize: '48px', fill: '#deb989'
         }).setOrigin(0.5);
         this.roulettePanel.add(this.rouletteTitle);
 
         // Skill Counts Text (Top Left)
         this.skillCountsText = this.add.text(-panelW / 2 + 30, -panelH / 2 + 30, '', {
-            fontFamily: 'Do Hyeon', fontSize: '24px', fill: '#ffffff',
+            fontFamily: 'Ghanachocolate', fontSize: '24px', fill: '#e0c0a0',
             align: 'left', lineSpacing: 10
         }).setOrigin(0, 0);
         this.roulettePanel.add(this.skillCountsText);
@@ -676,14 +538,14 @@ export default class UIScene extends Phaser.Scene {
 
         // Spin Button (Bottom)
         this.spinBtn = this.add.text(0, panelH / 2 - 80, 'SPIN', {
-            fontFamily: 'Black Han Sans', fontSize: '60px', fill: '#ffffff', backgroundColor: '#333333',
+            fontFamily: 'Ghanachocolate', fontSize: '60px', fill: '#deb989', backgroundColor: '#4a3020',
             padding: { x: 50, y: 20 }
         })
             .setInteractive()
             .setOrigin(0.5)
             .on('pointerdown', () => this.spinRoulette())
             .on('pointerover', function () { this.setStyle({ fill: '#00ff00' }); })
-            .on('pointerout', function () { this.setStyle({ fill: '#ffffff' }); });
+            .on('pointerout', function () { this.setStyle({ fill: '#deb989' }); });
         this.roulettePanel.add(this.spinBtn);
 
         // Close Button (Top Right corner of panel)
@@ -711,7 +573,7 @@ export default class UIScene extends Phaser.Scene {
 
         if (games.length === 0) {
             const noGameText = this.add.text(0, 0, "No Games Left", {
-                fontFamily: 'Do Hyeon', fontSize: '32px', fill: '#888888'
+                fontFamily: 'Ghanachocolate', fontSize: '32px', fill: '#888888'
             }).setOrigin(0.5);
             this.wheelContainer.add(noGameText);
             return;
@@ -745,7 +607,7 @@ export default class UIScene extends Phaser.Scene {
             const ty = Math.sin(midAngle) * textRadius;
 
             const label = this.add.text(tx, ty, game, {
-                fontFamily: 'Do Hyeon', fontSize: '30px', fill: '#ffffff', stroke: '#000000', strokeThickness: 3
+                fontFamily: 'Ghanachocolate', fontSize: '30px', fill: '#ffffff', stroke: '#000000', strokeThickness: 3
             }).setOrigin(0.5);
 
             // Rotate text to radiate outward
@@ -783,7 +645,7 @@ export default class UIScene extends Phaser.Scene {
             let text = "스킬 등장 횟수 (Max 5):\n";
             this.specialActions.forEach((name, idx) => {
                 const count = counts[idx];
-                const color = count >= 5 ? '#ff0000' : '#ffffff';
+                const color = count >= 5 ? '#ff0000' : '#deb989';
                 // Clean name (remove emoji for list?) -> Keep it
                 // Maybe shorten?
                 text += `${name}: ${count}/5\n`;
@@ -969,7 +831,7 @@ export default class UIScene extends Phaser.Scene {
         }
 
         const winText = this.add.text(0, 0, winnerName, {
-            fontFamily: 'Do Hyeon', fontSize: '40px', fill: '#ffffff', backgroundColor: '#000000',
+            fontFamily: 'Ghanachocolate', fontSize: '40px', fill: '#deb989', backgroundColor: '#000000',
             stroke: '#ff0000', strokeThickness: 4, padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
         this.wheelContainer.add(winText);
@@ -1007,11 +869,13 @@ export default class UIScene extends Phaser.Scene {
             '#00FF00', // 3 Green
             '#3399FF', // 4 Blue (Brightened from #0000FF)
             '#CC66FF', // 5 Purple (Brightened from #800080)
-            '#D2B48C', // 6 Brown (Tan/Light Brown - Brightened from #8b4513)
+            '#ff86de', // 6 Pink (Updated from Brown)
             '#888888',
             '#888888',
             '#FF0000'  // 9 Ponix
         ];
-        return colors[id] || '#ffffff';
+        return colors[id] || '#deb989';
     }
 }
+
+

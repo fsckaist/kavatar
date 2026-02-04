@@ -14,37 +14,55 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.cameras.main.setBackgroundColor('#222222');
+        console.log("GameScene: create() started");
+        // alert("GameScene: Entered Create"); // Debug - Active
+        try {
+            // Background - Phase 1 Initially
+            this.bg = this.add.image(0, 0, 'bg_phase1').setOrigin(0, 0);
+            // Scale to fit
+            this.bg.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
 
-        // Background Removed as per request
-        this.cameras.main.setBackgroundColor('#222222');
+            // Send to back so grid is on top
+            this.bg.setDepth(-10);
 
-        // Launch UI Scene in parallel
-        this.scene.launch('UIScene');
+            // Launch UI Scene in parallel
+            console.log("GameScene: Launching UIScene");
+            this.scene.launch('UIScene');
 
-        // Initialize Grid
-        // Reduced size for larger map (200 tiles) -> Updated to 42 (105% of 40)
-        // Shifted further left to 0.30 to make room for UI
-        this.grid = new HexGrid(this, this.cameras.main.width * 0.35, this.cameras.main.height / 2, 42, 15, this.mapId);
+            // Initialize Grid
+            // Reduced size for larger map (200 tiles) -> Updated to 42 (105% of 40)
+            // Shifted further left to 0.30 to make room for UI
+            // Position adjusted: +30px right, -35px up
+            console.log("GameScene: Initialize Grid");
+            this.grid = new HexGrid(this, this.cameras.main.width * 0.35 + 30, this.cameras.main.height / 2 - 35, 42, 15, this.mapId);
 
-        // Initialize Managers
-        this.gameManager = new GameManager(this, this.grid);
-        this.aiController = new AIController(this, this.grid);
+            // Initialize Managers
+            console.log("GameScene: Initialize Managers");
+            this.gameManager = new GameManager(this, this.grid);
+            this.aiController = new AIController(this, this.grid);
 
-        // Event Listeners
-        this.events.on('aiTurnStart', () => {
-            console.log("AI Turn Start");
-            this.aiController.runTurn(() => {
-                this.gameManager.endTurn();
+            // Event Listeners
+            this.events.on('aiTurnStart', () => {
+                console.log("AI Turn Start");
+                this.aiController.runTurn(() => {
+                    this.gameManager.endTurn();
+                });
             });
-        });
 
-        this.events.on('part2Started', () => {
-            // Handled by GameManager
-        });
+            this.events.on('part2Started', () => {
+                // Switch Background
+                this.bg.setTexture('bg_phase2');
+                this.bg.setDisplaySize(this.cameras.main.width, this.cameras.main.height);
+            });
 
-        // Start Game
-        this.gameManager.initGame();
+            // Start Game
+            console.log("GameScene: Starting GameManager");
+            this.gameManager.initGame();
+
+        } catch (error) {
+            console.error("GameScene Create Error:", error);
+            alert(`Game Error: ${error.message}`);
+        }
 
         // Input Handling for Actions
         this.input.on('gameobjectdown', (pointer, gameObject) => {
@@ -82,11 +100,30 @@ export default class GameScene extends Phaser.Scene {
         // Remove Input Listeners
         this.input.off('gameobjectdown');
 
-        console.log("GameScene Cleaned Up");
+        console.log("GameScene cleanup complete.");
+    }
+
+    shutdown() {
+        console.log("GameScene: shutdown() called");
+
+        // Stop UIScene if it's running
+        if (this.scene.isActive('UIScene')) {
+            this.scene.stop('UIScene');
+        }
+
+        // Call cleanup
+        this.cleanup();
     }
 
     handleInput(tile) {
         if (!this.gameManager) return;
+
+        // Route to Setup Handler if in Setup Phase
+        if (this.gameManager.isSetupPhase) {
+            this.gameManager.handleSetupClick(tile);
+            return;
+        }
+
         const team = this.gameManager.getCurrentTeam();
         if (!team) return;
 

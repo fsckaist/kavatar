@@ -1,0 +1,20 @@
+[이미지 크기]
+배경 : 1920x1080 px
+오브젝트 : 128x128 px
+육각형 크기 : 68x78 px (오브젝트 이미지 중심 일치)
+
+[색상 코드]
+Text (Light) : #deb989 (일반적인 텍스트)
+Text (Gray) : #7e5f41 (버튼이 눌린 경우)
+Text (Dark) : #201006 (밝은 배경)
+Orange : #ff8400
+Yellow : #f4cd18
+Green : #86eb03
+Blue : #3fbaee
+Purple : #c36afc
+Pink : #ff86de
+
+[랜더링 순서]
+1. 배경
+2. 바닥 타일
+3. 왕관 및 주사위 눈

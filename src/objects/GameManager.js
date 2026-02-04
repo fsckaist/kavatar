@@ -18,7 +18,7 @@ export default class GameManager {
             { id: 3, color: 'Green', ap: 0, name: '초록 넙죽이' },  // West
             { id: 4, color: 'Blue', ap: 0, name: '파란 넙죽이' },    // South
             { id: 5, color: 'Purple', ap: 0, name: '보라 넙죽이' },  // Center
-            { id: 6, color: 'Brown', ap: 0, name: '갈색 넙죽이' }   // Map 2 & 3 Special -> Now Map 1 too
+            { id: 6, color: 'Pink', ap: 0, name: '분홍 넙죽이' }   // Map 2 & 3 Special -> Now Map 1 too
         ];
 
         this.eventListeners = {
@@ -89,7 +89,10 @@ export default class GameManager {
 
         // 4. Next Team or Start Game
         this.setupTurn++;
+        console.log(`Setup Turn Advancing. Next: ${this.setupTurn} / ${this.teams}`);
+
         if (this.setupTurn > this.teams) {
+            console.log("Setup Phase Complete. Starting Game...");
             this.isSetupPhase = false;
             this.scene.events.emit('showToast', "게임 시작!");
             this.currentTurn = 1; // Reset to Team 1
@@ -131,15 +134,23 @@ export default class GameManager {
     resetTurnTimer() {
         // Base time is 50 seconds for ALL rounds as requested
         this.timeLeft = 50;
+        console.log("GameManager: resetTurnTimer called. Time Reset to 50s.");
 
         this.isPaused = false; // Reset pause on new turn
-        if (this.timerEvent) this.timerEvent.remove();
+        if (this.timerEvent) {
+            console.log("GameManager: Existing timer removed.");
+            this.timerEvent.remove();
+        }
 
         this.timerEvent = this.scene.time.addEvent({
             delay: 1000,
             callback: () => {
-                if (this.isPaused) return; // redundant if paused works, but safe
+                if (this.isPaused) {
+                    console.log("GameManager: Timer Tick Skipped (Paused)");
+                    return;
+                }
                 this.timeLeft--;
+                console.log(`GameManager: Timer Tick. Time Left: ${this.timeLeft}`);
                 this.scene.events.emit('updateUI');
                 if (this.timeLeft <= 0) {
                     this.scene.events.emit('showToast', "시간 초과! 턴이 강제 종료됩니다.");
@@ -148,6 +159,7 @@ export default class GameManager {
             },
             loop: true
         });
+        console.log("GameManager: New timerEvent created.");
         this.scene.events.emit('updateUI');
     }
 
@@ -174,6 +186,7 @@ export default class GameManager {
             this.scene.events.emit('aiTurnStart');
         } else {
             // Team Turn
+            console.log("GameManager: startTurn executed for Team " + this.currentTurn);
             const income = this.calcAP(this.currentTurn);
             let expansionBonus = 0;
             console.log(`Turn Start: Team ${this.currentTurn}`);
@@ -257,7 +270,11 @@ export default class GameManager {
             if (tile.ownerID === teamId) {
                 tileCount++;
                 if (tile.isSpecial) {
-                    specialBonus += 2; // +2 AP for Landmark
+                    if (tile.specialName === '창의학습관') {
+                        specialBonus += 4; // +4 AP for Creative Learning Center
+                    } else {
+                        specialBonus += 2; // +2 AP for other Landmarks
+                    }
                 }
             }
         }

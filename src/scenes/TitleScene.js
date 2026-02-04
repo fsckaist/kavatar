@@ -16,16 +16,16 @@ export default class TitleScene extends Phaser.Scene {
 
         // Title Text
         this.add.text(width / 2, height * 0.15, 'KAVATAR', {
-            fontFamily: 'Black Han Sans', fontSize: '80px', color: '#ffffff',
+            fontFamily: 'Ghanachocolate', fontSize: '80px', color: '#ffffff',
             stroke: '#000000', strokeThickness: 6
         }).setOrigin(0.5);
 
         this.add.text(width / 2, height * 0.25, '카바타: 최후의 넙죽이 (2026)', {
-            fontFamily: 'Do Hyeon', fontSize: '24px', color: '#aaaaaa'
+            fontFamily: 'Ghanachocolate', fontSize: '24px', color: '#aaaaaa'
         }).setOrigin(0.5);
 
         this.add.text(width / 2, height * 0.29, 'KAVATAR: The Last Nubzuki', {
-            fontFamily: 'Do Hyeon', fontSize: '20px', color: '#888888'
+            fontFamily: 'Ghanachocolate', fontSize: '20px', color: '#888888'
         }).setOrigin(0.5);
 
         // Map Cards Data
@@ -70,7 +70,7 @@ export default class TitleScene extends Phaser.Scene {
 
         // Map Title
         const titleText = this.add.text(0, 120, mapData.title, {
-            fontFamily: 'Do Hyeon', fontSize: '36px', color: '#ffffff'
+            fontFamily: 'Ghanachocolate', fontSize: '36px', color: '#ffffff'
         }).setOrigin(0.5);
         container.add(titleText);
 
@@ -81,7 +81,7 @@ export default class TitleScene extends Phaser.Scene {
         container.add(btnBg);
 
         const btnText = this.add.text(0, 180, 'START', {
-            fontFamily: 'Black Han Sans', fontSize: '20px', color: '#ffffff'
+            fontFamily: 'Ghanachocolate', fontSize: '20px', color: '#ffffff'
         }).setOrigin(0.5);
         container.add(btnText);
 
@@ -220,6 +220,7 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     startGame(mapId) {
+        console.log(`Starting Game with Map ID: ${mapId}`);
         this.scene.start('GameScene', { mapId: mapId });
     }
 }
