@@ -44,7 +44,7 @@ export default class HexTile extends Phaser.GameObjects.Container {
 
         // 2. Overlay Objects
         // Crown (Special / Landmark) using 'crown_gold'
-        this.crownSprite = scene.add.sprite(0, -15, 'crown_gold').setVisible(false);
+        this.crownSprite = scene.add.sprite(0, 0, 'crown_gold').setVisible(false);
         this.add(this.crownSprite);
 
         // Dice (Power) using 'dice_1' to 'dice_5'
@@ -162,41 +162,7 @@ export default class HexTile extends Phaser.GameObjects.Container {
             this.diceSprite.setVisible(false);
         }
 
-        // Special Tile Border (for all special tiles, regardless of ownership)
-        this.specialBorder.clear();
-        if (this.isSpecial) {
-            // Draw a semi-transparent hexagonal border
-            // Determine border color based on special type
-            let borderColor = 0xdeb989; // Gold for 창의학습관
-            if (this.specialName !== '창의학습관') {
-                borderColor = 0xc0c0c0; // Silver for others
-            }
 
-            // Darker/more opaque when captured
-            const opacity = this.ownerID !== 0 ? 0.95 : 0.6;
-
-            // Draw hexagon outline (approximate hex shape)
-            this.specialBorder.lineStyle(3, borderColor, opacity);
-            this.specialBorder.beginPath();
-
-            // Hexagon points (approximate for 68x78 tile)
-            const points = [
-                { x: 0, y: -39 },
-                { x: 34, y: -20 },
-                { x: 34, y: 20 },
-                { x: 0, y: 39 },
-                { x: -34, y: 20 },
-                { x: -34, y: -20 }
-            ];
-
-            this.specialBorder.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                this.specialBorder.lineTo(points[i].x, points[i].y);
-            }
-            this.specialBorder.closePath();
-            this.specialBorder.strokePath();
-            this.specialBorder.setDepth(1.5); // Between crown and dice
-        }
     }
 
     // Proxy methods to trigger update
