@@ -1,7 +1,7 @@
 [이미지 크기]
 배경 : 1920x1080 px
 오브젝트 : 128x128 px
-육각형 크기 : 68x78 px (오브젝트 이미지 중심 일치)
+육각형 크기 : 68x78 px (오브젝트 중심과 이미지 중심 일치)
 
 [색상 코드]
 Text (Light) : #deb989 (일반적인 텍스트)
@@ -11,7 +11,7 @@ Orange : #ff8400
 Yellow : #f4cd18
 Green : #86eb03
 Blue : #3fbaee
-Purple : #c36afc
+Purple : #af87ff
 Pink : #ff86de
 ponix : #ff2764
 

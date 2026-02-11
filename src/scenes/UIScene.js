@@ -435,8 +435,8 @@ export default class UIScene extends Phaser.Scene {
         const y = this.cameras.main.height - 100;
         const container = this.add.container(x, y);
         const text = this.add.text(0, 0, message, {
-            fontFamily: 'Ghanachocolate', fontSize: '24px', color: '#7e5f41',
-            backgroundColor: '#20100690', padding: { x: 20, y: 10 }
+            fontFamily: 'Ghanachocolate', fontSize: '24px', color: '#deb989',
+            backgroundColor: 'rgba(32,16,6,0.7)', padding: { x: 20, y: 10 }
         }).setOrigin(0.5);
         container.add(text);
         container.setDepth(100);
