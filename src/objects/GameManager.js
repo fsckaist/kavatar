@@ -14,12 +14,15 @@ export default class GameManager {
         this.teamData = [
             null,
             { id: 1, color: 'Orange', ap: 0, name: '주황 넙죽이' }, // North
-            { id: 2, color: 'Yellow', ap: 0, name: '노란 넙죽이' }, // East
+            { id: 2, color: 'Yellow', ap: 0, name: '노랑 넙죽이' }, // East
             { id: 3, color: 'Green', ap: 0, name: '초록 넙죽이' },  // West
-            { id: 4, color: 'Blue', ap: 0, name: '파란 넙죽이' },    // South
+            { id: 4, color: 'Blue', ap: 0, name: '파랑 넙죽이' },    // South
             { id: 5, color: 'Purple', ap: 0, name: '보라 넙죽이' },  // Center
             { id: 6, color: 'Pink', ap: 0, name: '분홍 넙죽이' }   // Map 2 & 3 Special -> Now Map 1 too
         ];
+
+        // Allowed Start Indices
+        this.startIndices = [14, 38, 61, 98, 116, 121];
 
         this.eventListeners = {
             onTurnStart: [],
@@ -53,6 +56,20 @@ export default class GameManager {
         // Initial UI Update
         this.scene.events.emit('updateUI');
         this.scene.events.emit('showToast', `${this.teamData[1].name}: 시작 위치를 선택하세요.`);
+
+        // Highlight Allowed Start Positions
+        this.highlightStartPositions();
+    }
+
+    highlightStartPositions() {
+        const tiles = this.grid.getAllTiles();
+        tiles.forEach(tile => {
+            if (this.startIndices.includes(tile.index)) {
+                tile.isStartCandidate = true;
+                tile.draw();
+            }
+        });
+
     }
 
     handleSetupClick(tile) {
@@ -61,6 +78,12 @@ export default class GameManager {
         // 1. Check if occupied
         if (tile.ownerID !== 0) {
             this.scene.events.emit('showToast', "이미 점령된 타일입니다.");
+            return;
+        }
+
+        // 1.5. Check if Allowed Start Position
+        if (!this.startIndices.includes(tile.index)) {
+            this.scene.events.emit('showToast', "지정된 시작 위치만 선택 가능합니다 (초록색 타일).");
             return;
         }
 
@@ -95,6 +118,14 @@ export default class GameManager {
             console.log("Setup Phase Complete. Starting Game...");
             this.isSetupPhase = false;
             this.scene.events.emit('showToast', "게임 시작!");
+
+            // Clear Start Highlights
+            const tiles = this.grid.getAllTiles();
+            tiles.forEach(tile => {
+                tile.isStartCandidate = false;
+                tile.draw();
+            });
+
             this.currentTurn = 1; // Reset to Team 1
             this.startTurn();
         } else {

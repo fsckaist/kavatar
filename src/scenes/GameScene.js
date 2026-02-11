@@ -189,6 +189,13 @@ export default class GameScene extends Phaser.Scene {
             const bonus = Phaser.Math.Between(5, 10);
             team.ap += bonus;
             console.log(`Skill: Random Dice -> +${bonus} AP`);
+
+            // Push History
+            this.pushAction({
+                type: 'SKILL_DICE',
+                amount: bonus
+            });
+
             this.events.emit('showToast', `랜덤 다이스! (+${bonus} Pt)`);
             this.events.emit('updateUI');
             return;
@@ -210,21 +217,51 @@ export default class GameScene extends Phaser.Scene {
 
         switch (skillIdx) {
             case 0: // EMP Blast: Target + Radius 1 -> Power -2 (Min 1)
-                // Affects ALL tiles in radius? Or just enemies? Request says "designated + surrounding". Usually implies all.
-                // Let's affect target + neighbors.
                 const empTargets = [target, ...this.grid.getNeighbors(target)];
+                const empChanges = [];
+
                 empTargets.forEach(t => {
-                    if (t.power > 1 && !t.isShielded && t.ownerID !== team.id) {
-                        t.setPower(Math.max(1, t.power - 2));
-                        t.draw();
+                    if (t.ownerID !== team.id && !t.isShielded && t.power > 1) { // Logic match below
+                        empChanges.push({
+                            tile: t,
+                            prevPower: t.power,
+                            prevShield: t.isShielded
+                        });
                     }
                 });
-                success = true;
+
+                if (empChanges.length > 0) {
+                    empTargets.forEach(t => {
+                        if (t.power > 1 && !t.isShielded && t.ownerID !== team.id) {
+                            t.setPower(Math.max(1, t.power - 2));
+                            t.draw();
+                        }
+                    });
+
+                    this.pushAction({
+                        type: 'SKILL',
+                        skillIdx: 0,
+                        changes: empChanges
+                    });
+                    success = true;
+                } else {
+                    this.events.emit('showToast', "효과를 받을 대상이 없습니다.");
+                }
                 break;
 
             case 1: // Quantum Jump: Empty (Gray) OR Weak Enemy (Power 1) -> Mine
                 if ((target.ownerID === 0 || (target.ownerID !== team.id && target.power === 1)) && !target.isShielded) {
-                    // Check if Special (Maybe allow Quantum on Special?) User said "Special ok".
+                    this.pushAction({
+                        type: 'SKILL',
+                        skillIdx: 1,
+                        changes: [{
+                            tile: target,
+                            prevOwner: target.ownerID,
+                            prevPower: target.power,
+                            prevShield: target.isShielded
+                        }]
+                    });
+
                     target.setOwner(team.id);
                     target.setPower(1);
                     target.draw();
@@ -241,9 +278,26 @@ export default class GameScene extends Phaser.Scene {
             case 2: // Firewall: Own + Neighbors(Own) -> Shield
                 if (target.ownerID === team.id) {
                     const fwTargets = [target, ...this.grid.getNeighbors(target).filter(n => n.ownerID === team.id)];
+                    const fwChanges = [];
+
                     fwTargets.forEach(t => {
+                        if (!t.isShielded) { // Only record if it changes
+                            fwChanges.push({
+                                tile: t,
+                                prevShield: t.isShielded
+                            });
+                        }
                         t.isShielded = true;
                         t.draw();
+                    });
+
+                    // Even if all shielded, we count as success? Or only if at least one applied?
+                    // Let's assume always success for feedback, but save minimal state
+                    // If no changes, undo does nothing, which is fine.
+                    this.pushAction({
+                        type: 'SKILL',
+                        skillIdx: 2,
+                        changes: fwChanges
                     });
                     success = true;
                 } else {
@@ -255,25 +309,35 @@ export default class GameScene extends Phaser.Scene {
                 if (target.ownerID === team.id) {
                     const neighbors = this.grid.getNeighbors(target);
                     let converted = false;
+                    const schChanges = [];
+
                     neighbors.forEach(n => {
-                        // Scholarship Logic:
-                        // 1. Neutral: Requires My Power >= 2
-                        // 2. Enemy: Requires My Power > Enemy Power
                         const isNeutral = n.ownerID === 0;
                         const canCapture = isNeutral ? (target.power >= 2) : (n.power < target.power);
 
                         if (n.ownerID !== team.id && !n.isShielded && canCapture) {
+                            schChanges.push({
+                                tile: n,
+                                prevOwner: n.ownerID,
+                                prevPower: n.power,
+                                prevShield: n.isShielded
+                            });
+
                             n.setOwner(team.id);
-                            // Power remains same? Request says "Immediate Occupation". Usually keeps power or sets to 1.
-                            // Original request: "전투력이 관계 없이... 즉시 우리 팀으로 변경".
-                            // Modified request: "Own -> Weak Neighbors -> Mine".
-                            // I'll keep the power but change owner.
-                            n.setPower(1); // Set Power to 1 as requested
+                            n.setPower(1);
                             n.draw();
                             converted = true;
                         }
                     });
-                    if (converted) success = true;
+
+                    if (converted) {
+                        this.pushAction({
+                            type: 'SKILL',
+                            skillIdx: 3,
+                            changes: schChanges
+                        });
+                        success = true;
+                    }
                     else this.events.emit('showToast', "주변에 흡수할 수 있는 약한 적(보호막 X)이 없습니다.");
                 } else {
                     this.events.emit('showToast', "내 땅을 선택해야 합니다.");
@@ -282,17 +346,29 @@ export default class GameScene extends Phaser.Scene {
 
             case 4: // Overclock: Own + Neighbors -> Power +3 (Max 5)
                 if (target.ownerID === team.id) {
+                    const ocChanges = [];
+
                     // Target
-                    target.setPower(Math.min(5, target.power + 3));
-                    target.draw();
+                    if (target.power < 5) {
+                        ocChanges.push({ tile: target, prevPower: target.power });
+                        target.setPower(Math.min(5, target.power + 3));
+                        target.draw();
+                    }
 
                     // Neighbors (Own Only)
                     const ocNeighbors = this.grid.getNeighbors(target);
                     ocNeighbors.forEach(n => {
-                        if (n.ownerID === team.id) {
+                        if (n.ownerID === team.id && n.power < 5) {
+                            ocChanges.push({ tile: n, prevPower: n.power });
                             n.setPower(Math.min(5, n.power + 3));
                             n.draw();
                         }
+                    });
+
+                    this.pushAction({
+                        type: 'SKILL',
+                        skillIdx: 4,
+                        changes: ocChanges
                     });
                     success = true;
                 } else {
@@ -301,30 +377,48 @@ export default class GameScene extends Phaser.Scene {
                 break;
 
             case 5: // Vaccine Code: Target -> Neighbors(Ponix) -> Neutral
-                // Target center can be anything.
                 const vNeighbors = this.grid.getNeighbors(target);
                 let cleaned = false;
+                const vacChanges = [];
+                let purifyCountInc = 0;
+
+                // Helper to apply
+                const applyVaccine = (t) => {
+                    vacChanges.push({
+                        tile: t,
+                        prevOwner: t.ownerID,
+                        prevPower: t.power,
+                        prevShield: t.isShielded
+                    });
+                    t.setOwner(0);
+                    t.setPower(1);
+                    t.isShielded = false;
+                    t.draw();
+                    purifyCountInc++;
+                };
+
                 vNeighbors.forEach(n => {
-                    if (n.ownerID === 9 && !n.isShielded) { // Ponix
-                        n.setOwner(0);
-                        n.setPower(1);
-                        n.isShielded = false;
-                        n.draw();
+                    if (n.ownerID === 9 && !n.isShielded) {
+                        applyVaccine(n);
                         cleaned = true;
-                        team.purifyCount = (team.purifyCount || 0) + 1; // Increment Purify Count
                     }
                 });
-                // Also check center? Request: "Target center... radius 1 Ponix".
+
                 if (target.ownerID === 9 && !target.isShielded) {
-                    target.setOwner(0);
-                    target.setPower(1);
-                    target.isShielded = false;
-                    target.draw();
+                    applyVaccine(target);
                     cleaned = true;
-                    team.purifyCount = (team.purifyCount || 0) + 1; // Increment Purify Count
                 }
 
-                if (cleaned) success = true;
+                if (cleaned) {
+                    team.purifyCount = (team.purifyCount || 0) + purifyCountInc;
+                    this.pushAction({
+                        type: 'SKILL',
+                        skillIdx: 5,
+                        changes: vacChanges,
+                        purifyInc: purifyCountInc
+                    });
+                    success = true;
+                }
                 else this.events.emit('showToast', "주변에 정화할 수 있는 포닉스가 없습니다 (또는 보호막).");
                 break;
         }
@@ -453,6 +547,31 @@ export default class GameScene extends Phaser.Scene {
                 }
                 this.events.emit('updateUI');
                 return; // Early return
+
+            case 'SKILL_DICE':
+                if (team) {
+                    team.ap -= lastAction.amount;
+                    console.log(`Undo Skill Dice: -${lastAction.amount} AP`);
+                }
+                this.events.emit('updateUI');
+                return;
+
+            case 'SKILL':
+                console.log(`Undoing Skill ${lastAction.skillIdx}...`);
+                if (lastAction.changes) {
+                    lastAction.changes.forEach(change => {
+                        if (change.prevOwner !== undefined) change.tile.setOwner(change.prevOwner);
+                        if (change.prevPower !== undefined) change.tile.setPower(change.prevPower);
+                        if (change.prevShield !== undefined) change.tile.isShielded = change.prevShield;
+                        change.tile.draw();
+                    });
+                }
+                if (lastAction.skillIdx === 5 && lastAction.purifyInc && team) {
+                    team.purifyCount -= lastAction.purifyInc;
+                }
+                return;
+
+
         }
 
         // Refund AP (for normal actions)

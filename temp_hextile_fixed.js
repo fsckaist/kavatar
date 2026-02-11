@@ -29,7 +29,6 @@ export default class HexTile extends Phaser.GameObjects.Container {
         this.isSelected = false;
         this.isSpecial = false;
         this.specialName = '';
-        this.isStartCandidate = false; // New: For Setup Phase highlighting
 
         // 1. Base Sprite (The Tile)
         this.baseSprite = scene.add.sprite(0, 0, 'field_brown');
@@ -148,55 +147,6 @@ export default class HexTile extends Phaser.GameObjects.Container {
             }
         }
 
-        // Setup Phase: Highlight Start Candidates (if Neutral)
-        if (this.ownerID === 0 && this.isStartCandidate) {
-            this.baseSprite.setTint(0x00FF00); // Green Tint
-        }
-
-        // Team Highlight Border (Purple Team - ID 5)
-        if (this.teamBorder) this.teamBorder.clear(); // Safety check if called before init, though unlikely
-
-        // Custom Tint for Purple (Owner 5) to distinguish from Pink
-        if (this.ownerID === 5) {
-            // Darken Tint
-            // If Kingdom or Shielded, use Lighter Tint for visibility (User Request)
-            if (this.isPermanentShield || this.isShielded) {
-                this.baseSprite.setTint(0xCCCCCC); // Lighter for Castle/Shield
-            } else {
-                this.baseSprite.setTint(0x888888); // Darker tint for normal land
-            }
-
-            // Draw Bright Border
-            if (this.teamBorder) {
-                const points = [
-                    { x: 0, y: -39 },
-                    { x: 34, y: -20 },
-                    { x: 34, y: 20 },
-                    { x: 0, y: 39 },
-                    { x: -34, y: 20 },
-                    { x: -34, y: -20 }
-                ];
-
-                this.teamBorder.lineStyle(2, 0xD080FF, 1.0); // Bright Purple Stroke
-                this.teamBorder.beginPath();
-                this.teamBorder.moveTo(points[0].x, points[0].y);
-                for (let i = 1; i < points.length; i++) {
-                    this.teamBorder.lineTo(points[i].x, points[i].y);
-                }
-                this.teamBorder.closePath();
-                this.teamBorder.strokePath();
-                this.teamBorder.setDepth(1.6); // Above special border?
-            }
-
-        } else {
-            // Only clear tint if NOT a start candidate (otherwise we lose the green highlight)
-            if (this.ownerID === 0 && this.isStartCandidate) {
-                // Do nothing, keep green tint
-            } else {
-                this.baseSprite.clearTint();
-            }
-        }
-
         // Crown
         // Show if Special Land (Landmark)
         // User said: "특수 칸은 칸 위에 왕관 모양을 얹고"
@@ -223,7 +173,48 @@ export default class HexTile extends Phaser.GameObjects.Container {
             this.diceSprite.setVisible(false);
         }
 
+<<<<<<< HEAD
 
+=======
+        // Special Tile Border (REMOVED as per user request)
+        this.specialBorder.clear();
+
+        // Team Highlight Border (Purple Team - ID 5)
+        this.teamBorder.clear();
+        if (this.ownerID === 5) {
+            // Darken Tint
+            // If Kingdom or Shielded, use Lighter Tint for visibility (User Request)
+            if (this.isPermanentShield || this.isShielded) {
+                this.baseSprite.setTint(0xCCCCCC); // Lighter for Castle/Shield
+            } else {
+                this.baseSprite.setTint(0x888888); // Darker tint for normal land
+            }
+
+            // Draw Bright Border
+            // Using same points as specialBorder/hitArea
+            const points = [
+                { x: 0, y: -39 },
+                { x: 34, y: -20 },
+                { x: 34, y: 20 },
+                { x: 0, y: 39 },
+                { x: -34, y: 20 },
+                { x: -34, y: -20 }
+            ];
+
+            this.teamBorder.lineStyle(2, 0xD080FF, 1.0); // Bright Purple Stroke
+            this.teamBorder.beginPath();
+            this.teamBorder.moveTo(points[0].x, points[0].y);
+            for (let i = 1; i < points.length; i++) {
+                this.teamBorder.lineTo(points[i].x, points[i].y);
+            }
+            this.teamBorder.closePath();
+            this.teamBorder.strokePath();
+            this.teamBorder.setDepth(1.6); // Above special border?
+
+        } else {
+            this.baseSprite.clearTint();
+        }
+>>>>>>> dfe1812 (Refactor: Improve visual clarity and fix undo logic)
     }
 
     // Proxy methods to trigger update
