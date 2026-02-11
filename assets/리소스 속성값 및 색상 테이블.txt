@@ -13,6 +13,7 @@ Green : #86eb03
 Blue : #3fbaee
 Purple : #c36afc
 Pink : #ff86de
+ponix : #ff2764
 
 [랜더링 순서]
 1. 배경
