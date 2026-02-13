@@ -575,6 +575,7 @@ export default class UIScene extends Phaser.Scene {
     }
 
     drawWheel() {
+        this.wheelContainer.remove(this.wheelRT, false); // Keep RT alive
         this.wheelContainer.removeAll(true);
 
         // Optimization: Use RenderTexture to cache the wheel drawing
@@ -865,18 +866,24 @@ export default class UIScene extends Phaser.Scene {
         }
 
         this.time.delayedCall(2000, () => {
-            this.drawWheel(); // Redraw (removed item)
-            this.wheelContainer.setAngle(0); // Reset
+            try {
+                this.drawWheel(); // Redraw (removed item)
+                this.wheelContainer.setAngle(0); // Reset
 
-            const nextGames = (this.rouletteMode === 'SPECIAL')
-                ? this.activeSpecialSkills
-                : this.miniGames;
+                const nextGames = (this.rouletteMode === 'SPECIAL')
+                    ? this.activeSpecialSkills
+                    : this.miniGames;
 
-            if (nextGames.length > 0) {
+                if (nextGames.length > 0) {
+                    this.spinBtn.setVisible(true);
+                    this.spinBtn.setText("SPIN AGAIN");
+                } else {
+                    this.spinBtn.setVisible(false);
+                }
+            } catch (e) {
+                console.error("Roulette Error:", e);
                 this.spinBtn.setVisible(true);
                 this.spinBtn.setText("SPIN AGAIN");
-            } else {
-                this.spinBtn.setVisible(false);
             }
         });
     }

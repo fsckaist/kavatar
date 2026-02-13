@@ -17,6 +17,8 @@ export default class SaveManager {
                 isSetupPhase: gm.isSetupPhase,
                 setupTurn: gm.setupTurn,
                 timeLeft: gm.timeLeft, // Save Time Left
+                skillRouletteCounts: gm.skillRouletteCounts, // Save Roulette Counts
+
 
                 // Team Data
                 teamData: gm.teamData,
@@ -72,6 +74,7 @@ export default class SaveManager {
             gm.isSetupPhase = state.isSetupPhase;
             gm.setupTurn = state.setupTurn;
             gm.timeLeft = state.timeLeft || 60; // Default if missing
+            gm.skillRouletteCounts = state.skillRouletteCounts || [0, 0, 0, 0, 0, 0]; // Restore or Default
 
             // Restore Team Data
             gm.teamData = state.teamData;

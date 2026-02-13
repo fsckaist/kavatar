@@ -26,6 +26,9 @@ export default class GameManager {
         // Allowed Start Indices
         this.startIndices = [14, 38, 61, 98, 116, 121];
 
+        // Skill Roulette Counters (Indices: 0-5)
+        this.skillRouletteCounts = [0, 0, 0, 0, 0, 0];
+
         this.eventListeners = {
             onTurnStart: [],
             onTurnEnd: []
