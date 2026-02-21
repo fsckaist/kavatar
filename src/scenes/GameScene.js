@@ -666,6 +666,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     actionPurify() {
+        // 포닉스 등장 전(isPart2 아닐 때)에는 동작하지 않음
+        if (!this.gameManager.isPart2) return;
+
         this.expandMode = false;
         this.skillMode = null;
         this.gameManager.setTimerPaused(false); // Resume if cancelled
