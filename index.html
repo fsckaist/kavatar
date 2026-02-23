@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KAVATAR</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.80.1/phaser.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
     <style>
@@ -30,8 +31,58 @@
 
 <body>
     <div id="game-container"></div>
+    <div id="gpu-warning" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #201006; color: #fff; z-index: 10000; padding: 40px; box-sizing: border-box; font-family: 'Pretendard', sans-serif;">
+        <div style="max-width: 600px; margin: 0 auto; text-align: center;">
+            <h1>⚠️ GPU 가속이 꺼져 있습니다</h1>
+            <p>현재 브라우저에서 GPU 가속이 비활성화되어 있습니다.</p>
+            <p>게임이 정상적으로 동작하지 않거나 성능 저하가 발생할 수 있습니다.</p>
+            <hr style="border-color: #444; margin: 30px 0;">
+            <h2>GPU 가속 켜는 방법</h2>
+            <p><strong>Chrome :</strong> 설정 → 시스템 → "사용 가능한 경우 하드웨어 가속 사용" 체크</p>
+            <p><strong>Edge :</strong> 설정 → 시스템 및 성능 → "하드웨어 가속이 사용 가능한 경우 사용" 체크</p>
+            <p><strong>Firefox :</strong> 주소창에 about:config → gpu 검색 → webgl.force-enabled = true</p>
+            <p style="color: #888; margin-top: 30px;">설정 변경 후 브라우저를 재시작하세요.</p>
+        </div>
+    </div>
 
-    <!-- Scripts -->
+<!-- Scripts -->
+    <script>
+        function checkGpuAcceleration() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+
+                if (!gl) return { supported: false, gpuAccelerated: false, renderer: 'WebGL not supported' };
+
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                if (!debugInfo) return { supported: true, gpuAccelerated: 'Unknown', renderer: 'Extension not supported' };
+
+                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+
+                const isSoftwareRenderer = 
+                    renderer.includes('swiftshader') || 
+                    renderer.includes('llvmpipe') || 
+                    renderer.includes('microsoft basic render driver') ||
+                    renderer.includes('software');
+
+                return {
+                    supported: true,
+                    gpuAccelerated: !isSoftwareRenderer,
+                    renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL)
+                };
+            } catch (e) {
+                return { supported: false, gpuAccelerated: false, renderer: 'Error' };
+            }
+        }
+
+        const gpuInfo = checkGpuAcceleration();
+        console.log('GPU Info:', gpuInfo);
+
+        if (!gpuInfo.gpuAccelerated) {
+            document.getElementById('game-container').style.display = 'none';
+            document.getElementById('gpu-warning').style.display = 'block';
+        }
+    </script>
     <script type="module" src="src/main.js?v=force_new_49"></script>
 </body>
 

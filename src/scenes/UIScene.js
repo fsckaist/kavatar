@@ -572,15 +572,6 @@ export default class UIScene extends Phaser.Scene {
             .setOrigin(0.5)
             .on('pointerdown', () => this.closeRoulette());
         this.roulettePanel.add(closeBtn);
-
-        // GPU 가속 안내 메세지 (오른쪽 위)
-        const gpuNoticeX = panelW / 2 - 20;
-        const gpuNoticeY = -panelH / 2 + 80;
-        const gpuNotice = this.add.text(gpuNoticeX, gpuNoticeY, 'Chrome에서 gpu 가속 확인 요망', {
-            fontFamily: 'Ghanachocolate', fontSize: '18px', fill: '#ff9944',
-            stroke: '#201006', strokeThickness: 3
-        }).setOrigin(1, 0.5);
-        this.roulettePanel.add(gpuNotice);
     }
 
     drawWheel() {
