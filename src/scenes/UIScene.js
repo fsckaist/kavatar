@@ -197,8 +197,6 @@ export default class UIScene extends Phaser.Scene {
             if (this.adminApInput) this.adminApInput.setVisible(false);
         });
 
-        // Row 2: Fortify, Special Skills Use
-        this.fortifyBtn = this.createButton(btnX_Left, btnYStart + btnGap, '< 요새화 (W) 2Pt >', () => this.gameScene.events.emit('actionFortify'));
         this.createButton(btnX_Right, btnYStart + btnGap, '< 특수 스킬 룰렛 >', () => this.openRoulette('SPECIAL'));
 
         // Row 3: Expand, Skill Roulette

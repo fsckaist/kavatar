@@ -149,7 +149,7 @@ export default class GameScene extends Phaser.Scene {
 
     setupActionListeners() {
         this.events.on('actionRecruit', () => this.actionRecruit());
-        this.events.on('actionFortify', () => this.actionFortify());
+
         this.events.on('actionExpand', () => this.actionExpand());
         this.events.on('actionPurify', () => this.actionPurify());
         this.events.on('actionUndo', () => this.actionUndo()); // UNDO Listener
@@ -164,7 +164,7 @@ export default class GameScene extends Phaser.Scene {
 
         // Keyboard Shortcuts
         this.input.keyboard.on('keydown-Q', () => this.actionRecruit());
-        this.input.keyboard.on('keydown-W', () => this.actionFortify());
+
         this.input.keyboard.on('keydown-E', () => this.actionExpand());
         this.input.keyboard.on('keydown-R', () => this.actionPurify());
         this.input.keyboard.on('keydown-A', () => this.actionUndo());
