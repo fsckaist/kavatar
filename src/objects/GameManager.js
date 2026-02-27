@@ -11,6 +11,7 @@ export default class GameManager {
         this.currentRound = 1;
         this.currentTurn = 1; // 1-6 = Teams, 9 = AI
         this.isPart2 = false;
+        this.videoOpened = false;
 
         // Team Data (0 is neutral placeholder)
         this.teamData = [
@@ -430,6 +431,10 @@ export default class GameManager {
         // Check Ponix event
         if (this.currentRound === 9 && !this.isPart2) {
             specialEvent = this.triggerPart2();
+            if (!this.videoOpened) {
+                this.videoOpened = true;
+                window.open('https://drive.google.com/file/d/1Ve5od1C-CaVFAqhJJ9azQs-MJC0kHc1n/preview', '_blank');
+            }
         }
 
         if (this.checkVictory()) {
